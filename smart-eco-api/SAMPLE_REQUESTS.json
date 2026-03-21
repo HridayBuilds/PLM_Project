@@ -1,0 +1,134 @@
+{
+    "DOCUMENTATION": "=== SEND THIS TO YOUR BACKEND GUY ===",
+
+    "ENDPOINT_1_ANALYZE": {
+        "description": "POST /api/v1/eco/impact/analyze - Rule-based analysis",
+        "request_body": {
+            "eco_id": "550e8400-e29b-41d4-a716-446655440000",
+            "eco_title": "Upgrade Motor Assembly v2",
+            "eco_type": "bom",
+            "version_update": true,
+            "status": "draft",
+            "parent_product_cost_price": 500.00,
+            "bom_changes": [
+                {
+                    "id": "change-001",
+                    "bom_component_id": "comp-001",
+                    "component_product": {
+                        "id": "prod-motor-001",
+                        "name": "DC Motor 12V",
+                        "cost_price": 45.50
+                    },
+                    "unit": "pcs",
+                    "old_quantity": 2,
+                    "new_quantity": 3,
+                    "change_type": "modified"
+                },
+                {
+                    "id": "change-002",
+                    "bom_component_id": "comp-002",
+                    "component_product": {
+                        "id": "prod-capacitor-001",
+                        "name": "Capacitor 100uF",
+                        "cost_price": 2.25
+                    },
+                    "unit": "pcs",
+                    "old_quantity": null,
+                    "new_quantity": 4,
+                    "change_type": "added"
+                },
+                {
+                    "id": "change-003",
+                    "bom_component_id": "comp-003",
+                    "component_product": {
+                        "id": "prod-resistor-001",
+                        "name": "Resistor 10K",
+                        "cost_price": 0.50
+                    },
+                    "unit": "pcs",
+                    "old_quantity": 10,
+                    "new_quantity": null,
+                    "change_type": "removed"
+                }
+            ],
+            "product_changes": [
+                {
+                    "id": "pchange-001",
+                    "field_name": "cost_price",
+                    "old_value": "500.00",
+                    "new_value": "550.00"
+                }
+            ],
+            "bom_operations": [
+                {
+                    "id": "op-001",
+                    "operation_name": "Motor Assembly",
+                    "work_center": "Assembly Line A",
+                    "expected_duration_minutes": 15.0
+                },
+                {
+                    "id": "op-002",
+                    "operation_name": "Quality Check",
+                    "work_center": "QC Station",
+                    "expected_duration_minutes": 5.0
+                }
+            ]
+        }
+    },
+
+    "ENDPOINT_2_AI_INSIGHT": {
+        "description": "POST /api/v1/eco/impact/ai-insight - Same body as analyze, but with AI recommendations",
+        "request_body": "Same as ENDPOINT_1_ANALYZE"
+    },
+
+    "ENDPOINT_3_BATCH": {
+        "description": "POST /api/v1/eco/impact/batch-summary - Multiple ECOs at once",
+        "request_body": {
+            "ecos": [
+                {
+                    "eco_id": "eco-001",
+                    "eco_title": "First ECO",
+                    "eco_type": "bom",
+                    "version_update": false,
+                    "status": "draft",
+                    "parent_product_cost_price": 100.00,
+                    "bom_changes": [],
+                    "product_changes": [],
+                    "bom_operations": []
+                },
+                {
+                    "eco_id": "eco-002",
+                    "eco_title": "Second ECO",
+                    "eco_type": "product",
+                    "version_update": true,
+                    "status": "in_progress",
+                    "parent_product_cost_price": 200.00,
+                    "bom_changes": [],
+                    "product_changes": [],
+                    "bom_operations": []
+                }
+            ]
+        }
+    },
+
+    "DATA_MAPPING_FROM_DATABASE": {
+        "description": "How backend should map database tables to this JSON",
+        "mappings": {
+            "eco_id": "ECO.id",
+            "eco_title": "ECO.title",
+            "eco_type": "ECO.eco_type",
+            "version_update": "ECO.version_update",
+            "status": "ECO.status",
+            "parent_product_cost_price": "PRODUCT.cost_price (where PRODUCT.id = ECO.product_id)",
+            "bom_changes": "ECO_BOM_CHANGE rows joined with BOM_COMPONENT and PRODUCT",
+            "product_changes": "ECO_PRODUCT_CHANGE rows for this ECO",
+            "bom_operations": "BOM_OPERATION rows where BOM_OPERATION.bom_id = ECO.bom_id"
+        }
+    },
+
+    "CHANGE_TYPES": {
+        "modified": "Component quantity changed (old_quantity AND new_quantity have values)",
+        "added": "New component added (old_quantity is null, new_quantity has value)",
+        "removed": "Component removed (old_quantity has value, new_quantity is null)"
+    }
+}

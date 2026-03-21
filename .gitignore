@@ -32,3 +32,17 @@ application-local.properties
 
 # Compiled files
 *.compiled
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+build/
