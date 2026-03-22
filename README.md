@@ -2,6 +2,14 @@
 
 A robust Product Lifecycle Management (PLM) solution focusing on Engineering Change Orders (ECO), Bill of Materials (BOM), and Product versioning.
 
+## Problem Statement
+In manufacturing and hardware development, tracking product revisions, component substitutions, and operational changes across a supply chain is a logistical challenge. Without a centralized system, Engineering Change Orders (ECOs) are often managed via scattered spreadsheets and emails, leading to mismatched versions, unapproved changes reaching the production floor, and opaque audit trails. 
+
+**Ecova** was built to solve this by providing a controlled, role-based environment where:
+- **Engineers** can draft precise modifications to Products and Bill of Materials (BOM).
+- **Approvers** can review, compare (via precise visual diffs), and sign off on impact parameters (cost, production time).
+- **Operations & Admins** maintain a single source of truth for all active versions across the organization.
+
 ## Features
 - **Role-Based Access Control:** Separate dashboards and workflows for Admins, Engineers, and Approvers.
 - **Product Management:** Track product versions, attributes, and file attachments.
