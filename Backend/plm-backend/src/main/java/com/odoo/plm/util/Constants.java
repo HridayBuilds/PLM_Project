@@ -2,13 +2,16 @@ package com.odoo.plm.util;
 
 public class Constants {
 
+    // App Info
+    public static final String APP_NAME = "Ecova";
+
     // Token Expiration
     public static final int VERIFICATION_TOKEN_EXPIRATION_HOURS = 24;
     public static final int PASSWORD_RESET_TOKEN_EXPIRATION_HOURS = 1;
 
     // Email Templates
-    public static final String VERIFICATION_EMAIL_SUBJECT = "Verify Your Email - PLM System";
-    public static final String PASSWORD_RESET_EMAIL_SUBJECT = "Reset Your Password - PLM System";
+    public static final String VERIFICATION_EMAIL_SUBJECT = "Verify Your Email - Ecova";
+    public static final String PASSWORD_RESET_EMAIL_SUBJECT = "Reset Your Password - Ecova";
 
     // Validation Messages
     public static final String INVALID_TOKEN = "Invalid or expired token";
@@ -22,7 +25,7 @@ public class Constants {
     public static final String ACCOUNT_DISABLED = "Account has been disabled. Please contact support.";
     public static final String PASSWORD_MISMATCH = "Current password is incorrect";
     public static final String PASSWORDS_DO_NOT_MATCH = "Password and confirm password do not match";
-    public static final String INVALID_LOGIN_ID_FORMAT = "Login ID must start with 'PLM' and be 6-12 characters total";
+    public static final String INVALID_LOGIN_ID_FORMAT = "Login ID must start with 'ECV' and be 6-12 characters total";
 
     // Success Messages
     public static final String SIGNUP_SUCCESS = "Registration successful! Please check your email to verify your account.";

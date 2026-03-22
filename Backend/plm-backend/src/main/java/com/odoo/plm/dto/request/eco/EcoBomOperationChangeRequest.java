@@ -1,32 +1,32 @@
 package com.odoo.plm.dto.request.eco;
 
-import jakarta.validation.Valid;
+import com.odoo.plm.enums.ChangeType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.UUID;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class EcoBomOperationChangeRequest {
-
-    // For modifying operations in BOM ECO
-    @Valid
-    private List<BomOperationChangeItem> operations;
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BomOperationChangeItem {
-        private String name;
-        private String workCenter;
-        private Integer expectedDurationMinutes;
-        private Integer sequence;
-        private String changeType; // ADDED, MODIFIED, REMOVED
-    }
+    @NotNull(message = "Change type is required")
+    private ChangeType changeType;
+    
+    private UUID bomOperationId;
+    
+    @NotBlank(message = "Operation name is required")
+    private String operationName;
+    
+    private String workCenter;
+    
+    @NotNull(message = "Duration is required")
+    private Integer expectedDurationMinutes;
+    
+    private Integer sequence;
 }

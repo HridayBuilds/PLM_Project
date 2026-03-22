@@ -25,7 +25,7 @@ public class BomController {
     private final BomService bomService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BomResponse> createBom(@Valid @RequestBody CreateBomRequest request) {
         BomResponse response = bomService.createBom(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -36,6 +36,22 @@ public class BomController {
     public ResponseEntity<BomResponse> activateBom(@PathVariable UUID id) {
         BomResponse response = bomService.activateBom(id);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BomResponse> updateBom(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateBomRequest request) {
+        BomResponse response = bomService.updateBom(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteBom(@PathVariable UUID id) {
+        bomService.deleteBom(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")

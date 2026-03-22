@@ -46,6 +46,10 @@ public class EcoStage {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
+
     @OneToMany(mappedBy = "ecoStage", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EcoApprovalRule> approvalRules = new ArrayList<>();

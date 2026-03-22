@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,47 +17,15 @@ public class EcoComparisonResponse {
 
     private UUID ecoId;
     private String ecoTitle;
+    private String type; // "Product" or "BOM"
 
-    // Original data
-    private OriginalData original;
-
-    // Proposed changes
-    private ProposedData proposed;
-
-    // Change summary
+    // For Product Type
     private List<ChangeItem> changes;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class OriginalData {
-        private String productName;
-        private Integer productVersion;
-        private String salePrice;
-        private String costPrice;
-        private List<ComponentData> components;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProposedData {
-        private String salePrice;
-        private String costPrice;
-        private List<ComponentData> components;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ComponentData {
-        private String name;
-        private String quantity;
-        private String unit;
-    }
+    // For BOM Type
+    private List<ComponentComparison> components;
+    private List<OperationComparison> operations;
+    private ComparisonSummary summary;
 
     @Data
     @Builder
@@ -68,5 +37,41 @@ public class EcoComparisonResponse {
         private String newValue;
         private String changeType; // MODIFIED, ADDED, REMOVED
         private String color; // green, red, black for UI
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ComponentComparison {
+        private UUID id;
+        private String name;
+        private BigDecimal version1Qty;
+        private BigDecimal version2Qty;
+        private String unit;
+        private String changeType; // ADD, REMOVE, UPDATE, UNCHANGED
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OperationComparison {
+        private UUID id;
+        private String name;
+        private String workCenter;
+        private Integer version1Duration;
+        private Integer version2Duration;
+        private String changeType; // ADD, REMOVE, UPDATE, UNCHANGED
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ComparisonSummary {
+        private BigDecimal totalPartsDelta;
+        private Integer productionCycleDelta;
+        private BigDecimal estimatedCostImpact;
     }
 }

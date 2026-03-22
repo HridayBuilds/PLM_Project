@@ -1,5 +1,6 @@
 package com.odoo.plm.dto.response.bom;
 
+import com.odoo.plm.dto.response.FileResponse;
 import com.odoo.plm.enums.BomStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,10 +21,12 @@ public class BomResponse {
     private UUID productId;
     private String productName;
     private String reference;
+    private Integer quantity;
     private Integer version;
     private BomStatus status;
     private List<BomComponentResponse> components;
     private List<BomOperationResponse> operations;
+    private List<FileResponse> attachments;
     private UUID createdById;
     private String createdByName;
     private LocalDateTime createdAt;

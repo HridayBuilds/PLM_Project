@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,4 +27,7 @@ public class CreateEcoStageRequest {
 
     @NotNull(message = "Is final flag is required")
     private Boolean isFinal;
+
+    @NotNull(message = "Product ID is required")
+    private UUID productId;
 }

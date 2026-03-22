@@ -37,8 +37,13 @@ public class Bom {
     private Product product;
 
     @NotBlank
-    @Column(name = "reference", nullable = false, length = 100)
+    @Column(name = "reference", nullable = false, length = 8)
     private String reference;
+
+    @NotNull
+    @Column(name = "quantity", nullable = false)
+    @Builder.Default
+    private Integer quantity = 1;
 
     @NotNull
     @Column(name = "version", nullable = false)

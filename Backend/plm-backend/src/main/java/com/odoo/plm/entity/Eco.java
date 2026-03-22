@@ -100,4 +100,12 @@ public class Eco {
     @OneToMany(mappedBy = "eco", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EcoProductChange> productChanges = new ArrayList<>();
+
+    @OneToMany(mappedBy = "eco", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<EcoBomOperationChange> bomOperationChanges = new ArrayList<>();
+
+    @OneToMany(mappedBy = "eco", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<EcoAttachment> attachments = new ArrayList<>();
 }

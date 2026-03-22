@@ -15,8 +15,8 @@ public class SignupRequest {
 
     @NotBlank(message = "Login ID is required")
     @Pattern(
-            regexp = "^PLM[A-Za-z0-9]{3,9}$",
-            message = "Login ID must start with 'PLM' and be 6-12 characters total (e.g., PLM2023)"
+            regexp = "^ECV[A-Za-z0-9]{3,9}$",
+            message = "Login ID must start with 'ECV' and be 6-12 characters total (e.g., ECV2023)"
     )
     private String loginId;
 

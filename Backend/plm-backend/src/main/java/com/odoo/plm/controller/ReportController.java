@@ -1,7 +1,13 @@
 package com.odoo.plm.controller;
 
 import com.odoo.plm.dto.response.report.AuditLogResponse;
+import com.odoo.plm.dto.response.report.EcoReportResponse;
+import com.odoo.plm.dto.response.report.ProductVersionHistoryResponse;
+import com.odoo.plm.dto.response.report.BomChangeHistoryResponse;
+import com.odoo.plm.dto.response.report.ArchivedProductResponse;
+import com.odoo.plm.dto.response.report.ProductBomMatrixResponse;
 import com.odoo.plm.service.AuditService;
+import com.odoo.plm.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,9 +28,57 @@ import java.util.UUID;
 public class ReportController {
 
     private final AuditService auditService;
+    private final ReportService reportService;
 
+    // ============ ECO Report ============
+    @GetMapping("/eco")
+    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'OPERATIONS_USER', 'ADMIN')")
+    public ResponseEntity<List<EcoReportResponse>> getEcoReport(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String stage,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime endDate) {
+        List<EcoReportResponse> response = reportService.getEcoReport(type, stage, startDate, endDate);
+        return ResponseEntity.ok(response);
+    }
+
+    // ============ Product Version History ============
+    @GetMapping("/products/{productId}/versions")
+    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'OPERATIONS_USER', 'ADMIN')")
+    public ResponseEntity<List<ProductVersionHistoryResponse>> getProductVersionHistory(
+            @PathVariable UUID productId) {
+        List<ProductVersionHistoryResponse> response = reportService.getProductVersionHistory(productId);
+        return ResponseEntity.ok(response);
+    }
+
+    // ============ BOM Change History ============
+    @GetMapping("/products/{productId}/bom-changes")
+    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'OPERATIONS_USER', 'ADMIN')")
+    public ResponseEntity<List<BomChangeHistoryResponse>> getBomChangeHistory(
+            @PathVariable UUID productId) {
+        List<BomChangeHistoryResponse> response = reportService.getBomChangeHistory(productId);
+        return ResponseEntity.ok(response);
+    }
+
+    // ============ Archived Products ============
+    @GetMapping("/products/archived")
+    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'OPERATIONS_USER', 'ADMIN')")
+    public ResponseEntity<List<ArchivedProductResponse>> getArchivedProducts() {
+        List<ArchivedProductResponse> response = reportService.getArchivedProducts();
+        return ResponseEntity.ok(response);
+    }
+
+    // ============ Product-BOM Matrix ============
+    @GetMapping("/product-bom-matrix")
+    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'OPERATIONS_USER', 'ADMIN')")
+    public ResponseEntity<List<ProductBomMatrixResponse>> getProductBomMatrix() {
+        List<ProductBomMatrixResponse> response = reportService.getProductBomMatrix();
+        return ResponseEntity.ok(response);
+    }
+
+    // ============ Audit Logs (Existing) ============
     @GetMapping("/audit-logs/eco/{ecoId}")
-    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'OPERATIONS_USER', 'ADMIN')")
     public ResponseEntity<List<AuditLogResponse>> getAuditLogsForEco(@PathVariable UUID ecoId) {
         List<AuditLogResponse> response = auditService.getLogsForEco(ecoId);
         return ResponseEntity.ok(response);
@@ -56,7 +110,7 @@ public class ReportController {
     }
 
     @GetMapping("/audit-logs/recent")
-    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'APPROVER', 'OPERATIONS_USER', 'ADMIN')")
     public ResponseEntity<Page<AuditLogResponse>> getRecentActivity(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {

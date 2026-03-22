@@ -4,6 +4,7 @@ import com.odoo.plm.dto.request.bom.BomComponentRequest;
 import com.odoo.plm.dto.request.bom.BomOperationRequest;
 import com.odoo.plm.dto.request.bom.BomSearchRequest;
 import com.odoo.plm.dto.request.bom.CreateBomRequest;
+import com.odoo.plm.dto.response.FileResponse;
 import com.odoo.plm.dto.response.bom.*;
 import com.odoo.plm.entity.*;
 import com.odoo.plm.enums.BomStatus;
@@ -14,6 +15,7 @@ import com.odoo.plm.exception.DuplicateResourceException;
 import com.odoo.plm.exception.ResourceNotFoundException;
 import com.odoo.plm.exception.UnauthorizedException;
 import com.odoo.plm.repository.*;
+import com.odoo.plm.service.storage.FileStorageService;
 import com.odoo.plm.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,9 @@ public class BomService {
     private final BomComponentRepository componentRepository;
     private final BomOperationRepository operationRepository;
     private final ProductRepository productRepository;
+    private final BomAttachmentRepository attachmentRepository;
+    private final FileMetadataRepository fileMetadataRepository;
+    private final FileStorageService fileStorageService;
     private final AuditService auditService;
     private final SecurityUtils securityUtils;
 
@@ -70,6 +75,7 @@ public class BomService {
         Bom bom = Bom.builder()
                 .product(product)
                 .reference(request.getReference())
+                .quantity(request.getQuantity())
                 .version(1)
                 .status(BomStatus.DRAFT)
                 .createdBy(currentUser)
@@ -92,6 +98,11 @@ public class BomService {
             for (BomOperationRequest opReq : request.getOperations()) {
                 addOperation(bom, opReq, sequence++);
             }
+        }
+
+        // Add attachments
+        if (request.getAttachmentIds() != null && !request.getAttachmentIds().isEmpty()) {
+            addAttachmentsToBom(bom, request.getAttachmentIds());
         }
 
         // Audit log
@@ -145,6 +156,76 @@ public class BomService {
     }
 
     /**
+     * Update a BOM
+     */
+    @Transactional
+    public BomResponse updateBom(UUID bomId, CreateBomRequest request) {
+        if (!securityUtils.canCreateOrModify()) {
+            throw new UnauthorizedException("Only Engineering users or Admins can update BOMs");
+        }
+
+        Bom bom = bomRepository.findById(bomId)
+                .orElseThrow(() -> new ResourceNotFoundException("BOM not found: " + bomId));
+
+        if (bom.getStatus() != BomStatus.DRAFT) {
+            throw new BadRequestException("Only DRAFT BOMs can be updated directly. For active BOMs, please use an ECO.");
+        }
+
+        if (!bom.getReference().equals(request.getReference()) && 
+            bomRepository.existsByReference(request.getReference())) {
+            throw new DuplicateResourceException("A BOM with reference '" + request.getReference() + "' already exists");
+        }
+
+        bom.setReference(request.getReference());
+        if (request.getQuantity() != null) {
+            bom.setQuantity(request.getQuantity());
+        }
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + request.getProductId()));
+        bom.setProduct(product);
+        bom = bomRepository.save(bom);
+
+        // Recreate components and operations
+        componentRepository.deleteAll(componentRepository.findByBomId(bomId));
+        operationRepository.deleteAll(operationRepository.findByBomIdOrderBySequenceAsc(bomId));
+
+        if (request.getComponents() != null) {
+            for (BomComponentRequest compReq : request.getComponents()) {
+                addComponent(bom, compReq);
+            }
+        }
+        if (request.getOperations() != null) {
+            int sequence = 1;
+            for (BomOperationRequest opReq : request.getOperations()) {
+                addOperation(bom, opReq, sequence++);
+            }
+        }
+
+        return mapToResponse(bom);
+    }
+
+    /**
+     * Delete a BOM
+     */
+    @Transactional
+    public void deleteBom(UUID bomId) {
+        if (!securityUtils.isAdmin()) {
+            throw new UnauthorizedException("Only Admins can delete BOMs");
+        }
+
+        Bom bom = bomRepository.findById(bomId)
+                .orElseThrow(() -> new ResourceNotFoundException("BOM not found: " + bomId));
+
+        if (bom.getStatus() == BomStatus.ACTIVE) {
+            throw new BadRequestException("Active BOMs cannot be deleted.");
+        }
+
+        componentRepository.deleteAll(componentRepository.findByBomId(bomId));
+        operationRepository.deleteAll(operationRepository.findByBomIdOrderBySequenceAsc(bomId));
+        bomRepository.delete(bom);
+    }
+
+    /**
      * Get active BOMs (visible to all roles)
      */
     @Transactional(readOnly = true)
@@ -165,7 +246,7 @@ public class BomService {
             return getActiveBoms(pageable);
         }
 
-        Page<Bom> boms = bomRepository.findAll(pageable);
+        Page<Bom> boms = bomRepository.findByStatusNot(BomStatus.ARCHIVED, pageable);
         return buildListResponse(boms);
     }
 
@@ -241,6 +322,7 @@ public class BomService {
         Bom newVersion = Bom.builder()
                 .product(originalBom.getProduct())
                 .reference(originalBom.getReference())
+                .quantity(originalBom.getQuantity())
                 .version(originalBom.getVersion() + 1)
                 .status(BomStatus.ACTIVE)
                 .createdBy(actor)
@@ -262,6 +344,18 @@ public class BomService {
             componentRepository.save(newComp);
         }
 
+        // Copy attachments to new version
+        List<BomAttachment> originalAttachments = attachmentRepository.findByBomId(originalBom.getId());
+        for (BomAttachment att : originalAttachments) {
+            BomAttachment newAtt = BomAttachment.builder()
+                    .bom(newVersion)
+                    .fileUrl(att.getFileUrl())
+                    .fileName(att.getFileName())
+                    .fileType(att.getFileType())
+                    .build();
+            attachmentRepository.save(newAtt);
+        }
+
         // Copy operations to new version
         List<BomOperation> originalOperations = operationRepository.findByBomIdOrderBySequenceAsc(originalBom.getId());
         for (BomOperation op : originalOperations) {
@@ -281,6 +375,22 @@ public class BomService {
         log.info("New BOM version created: {} v{}", newVersion.getReference(), newVersion.getVersion());
 
         return newVersion;
+    }
+
+    private void addAttachmentsToBom(Bom bom, List<UUID> fileIds) {
+        for (UUID fileId : fileIds) {
+            FileMetadata file = fileMetadataRepository.findById(fileId)
+                    .orElseThrow(() -> new ResourceNotFoundException("File not found: " + fileId));
+
+            BomAttachment attachment = BomAttachment.builder()
+                    .bom(bom)
+                    .fileUrl(fileStorageService.getFileUrl(file.getStoragePath()))
+                    .fileName(file.getOriginalFileName())
+                    .fileType(file.getFileType())
+                    .build();
+
+            attachmentRepository.save(attachment);
+        }
     }
 
     private void addComponent(Bom bom, BomComponentRequest request) {
@@ -345,21 +455,32 @@ public class BomService {
                         .name(o.getName())
                         .workCenter(o.getWorkCenter())
                         .expectedDurationMinutes(o.getExpectedDurationMinutes())
-                        .sequence(o.getSequence())
+                        .build())
+                .toList();
+
+        List<BomAttachment> attachments = attachmentRepository.findByBomId(bom.getId());
+        List<FileResponse> attachmentResponses = attachments.stream()
+                .map(att -> FileResponse.builder()
+                        .id(att.getId())
+                        .fileName(att.getFileName())
+                        .originalFileName(att.getFileName())
+                        .fileType(att.getFileType())
+                        .fileUrl(att.getFileUrl())
                         .build())
                 .toList();
 
         return BomResponse.builder()
                 .id(bom.getId())
-                .productId(bom.getProduct().getId())
-                .productName(bom.getProduct().getName())
+                .productId(bom.getProduct() != null ? bom.getProduct().getId() : null)
+                .productName(bom.getProduct() != null ? bom.getProduct().getName() : null)
                 .reference(bom.getReference())
                 .version(bom.getVersion())
                 .status(bom.getStatus())
                 .components(componentResponses)
                 .operations(operationResponses)
-                .createdById(bom.getCreatedBy().getId())
-                .createdByName(bom.getCreatedBy().getFirstName() + " " + bom.getCreatedBy().getLastName())
+                .attachments(attachmentResponses)
+                .createdById(bom.getCreatedBy() != null ? bom.getCreatedBy().getId() : null)
+                .createdByName(bom.getCreatedBy() != null ? bom.getCreatedBy().getFirstName() + " " + bom.getCreatedBy().getLastName() : null)
                 .createdAt(bom.getCreatedAt())
                 .updatedAt(bom.getUpdatedAt())
                 .build();

@@ -124,6 +124,65 @@ public class ProductService {
     }
 
     /**
+     * Update a product (Initial modify by Engineering/Admin)
+     */
+    @Transactional
+    public ProductResponse updateProduct(UUID productId, CreateProductRequest request) {
+        if (!securityUtils.canCreateOrModify()) {
+            throw new UnauthorizedException("Only Engineering users or Admins can update products");
+        }
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
+
+        if (product.getStatus() != ProductStatus.DRAFT) {
+            throw new BadRequestException("Only DRAFT products can be updated directly. For active products, please use an ECO.");
+        }
+
+        if (!product.getName().equals(request.getName()) && 
+            productRepository.existsByNameAndStatus(request.getName(), ProductStatus.ACTIVE)) {
+            throw new DuplicateResourceException("An active product with name '" + request.getName() + "' already exists");
+        }
+
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setSalePrice(request.getSalePrice());
+        product.setCostPrice(request.getCostPrice());
+
+        product = productRepository.save(product);
+        
+        if (request.getAttachmentIds() != null) {
+            attachmentRepository.deleteAll(attachmentRepository.findByProductId(productId));
+            addAttachmentsToProduct(product, request.getAttachmentIds());
+        }
+
+        auditService.logAction(AuditService.PRODUCT_CREATED, "Product Updated: " + product.getName(), null, null);
+        return mapToResponse(product);
+    }
+
+    /**
+     * Delete a product (Admin only)
+     */
+    @Transactional
+    public void deleteProduct(UUID productId) {
+        if (!securityUtils.isAdmin()) {
+            throw new UnauthorizedException("Only Admins can delete products");
+        }
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
+
+        if (product.getStatus() == ProductStatus.ACTIVE) {
+            throw new BadRequestException("Active products cannot be deleted. Archive them instead.");
+        }
+
+        attachmentRepository.deleteAll(attachmentRepository.findByProductId(productId));
+        productRepository.delete(product);
+        
+        auditService.logAction(AuditService.PRODUCT_ARCHIVED, "Product Deleted: " + product.getName(), null, null);
+    }
+
+    /**
      * Get active products (visible to all roles)
      */
     @Transactional(readOnly = true)
@@ -144,7 +203,7 @@ public class ProductService {
             return getActiveProducts(pageable);
         }
 
-        Page<Product> products = productRepository.findAll(pageable);
+        Page<Product> products = productRepository.findByStatusNot(ProductStatus.ARCHIVED, pageable);
         return buildListResponse(products);
     }
 
@@ -289,6 +348,17 @@ public class ProductService {
                         .build())
                 .toList();
 
+        UUID createdById = null;
+        String createdByName = null;
+        try {
+            if (product.getCreatedBy() != null) {
+                createdById = product.getCreatedBy().getId();
+                createdByName = product.getCreatedBy().getFirstName() + " " + product.getCreatedBy().getLastName();
+            }
+        } catch (Exception e) {
+            // Lazy loading exception - use defaults
+        }
+
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -298,8 +368,8 @@ public class ProductService {
                 .salePrice(product.getSalePrice())
                 .costPrice(product.getCostPrice())
                 .attachments(attachmentResponses)
-                .createdById(product.getCreatedBy().getId())
-                .createdByName(product.getCreatedBy().getFirstName() + " " + product.getCreatedBy().getLastName())
+                .createdById(createdById)
+                .createdByName(createdByName)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();

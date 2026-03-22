@@ -152,6 +152,7 @@ public class AuthService {
 
         User user = verificationToken.getUser();
         user.setIsVerified(true);
+        user.setStatus(com.odoo.plm.enums.UserStatus.ACTIVE); // Also activate the account
         userRepository.save(user);
 
         verificationToken.setIsUsed(true);

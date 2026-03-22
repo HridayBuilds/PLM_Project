@@ -1,7 +1,10 @@
 # Exclude folders not needed
 /ML/
-/Frontend/
 /Documents/
+
+# Secrets
+**/application.properties
+**/application-local.properties
 
 # Java/Maven
 Backend/plm-backend/target/
@@ -28,7 +31,6 @@ Thumbs.db
 # Environment
 .env
 *.env.local
-application-local.properties
 
 # Compiled files
 *.compiled

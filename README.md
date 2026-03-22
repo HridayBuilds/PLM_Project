@@ -1,56 +1,51 @@
-# PLM Project - Product Lifecycle Management
+# Ecova - Engineering Change Management (ECM) System
 
-A comprehensive **Product Lifecycle Management (PLM)** system built for the Odoo Hackathon.
-
-## Tech Stack
-
-- **Backend**: Spring Boot 3.x, Spring Security, JWT Authentication
-- **Database**: PostgreSQL
-- **Build Tool**: Maven
+A robust Product Lifecycle Management (PLM) solution focusing on Engineering Change Orders (ECO), Bill of Materials (BOM), and Product versioning.
 
 ## Features
+- **Role-Based Access Control:** Separate dashboards and workflows for Admins, Engineers, and Approvers.
+- **Product Management:** Track product versions, attributes, and file attachments.
+- **Bill of Materials (BOM):** Multi-level component trees with routing operations (time tracking, cost centers).
+- **ECO Workflow:** Submit proposed changes, track approvals through dynamic stages, and visualize impact via the Changes Comparison timeline.
+- **Reporting:** Exportable matrix insights on global supply chain components.
 
-- **User Management**: Role-based access (Admin, Engineering, Approver, Operations)
-- **Product Management**: Create, version, and manage products
-- **BOM Management**: Bills of Materials with components and operations
-- **ECO Workflow**: Engineering Change Orders with multi-stage approval
-- **Audit Trail**: Complete activity logging
+## Technology Stack
+- **Frontend:** React, Vite, Tailwind CSS, Lucide Icons
+- **Backend:** Java, Spring Boot, Spring Security (JWT)
+- **Database:** PostgreSQL via Hibernate/JPA
 
-## Project Structure
+## Getting Started
 
-```
-Backend/
-└── plm-backend/
-    └── src/main/java/com/odoo/plm/
-        ├── controller/    # REST API endpoints
-        ├── service/       # Business logic
-        ├── repository/    # Database access
-        ├── entity/        # JPA entities
-        ├── dto/           # Request/Response objects
-        ├── security/      # JWT authentication
-        ├── config/        # Configuration
-        └── enums/         # Constants
-```
+### Prerequisites
+- Node.js & npm
+- Java 21+
+- PostgreSQL
 
-## Running the Application
+### Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd Backend/plm-backend
+   ```
+2. Create `src/main/resources/application.properties` with your database credentials and secret keys (this file is git-ignored for security).
+3. Run the application:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
 
-```bash
-cd Backend/plm-backend
-mvn spring-boot:run
-```
+### Frontend Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd Frontend/plm-frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
 
-Server runs at: `http://localhost:8080`
-
-## API Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| POST /api/auth/signup | Register user |
-| POST /api/auth/login | Get JWT token |
-| GET /api/products | List products |
-| POST /api/ecos | Create ECO |
-| POST /api/ecos/{id}/approve | Approve ECO |
-
-## License
-
-MIT License
+## Development
+- Ensure code follows formatting guidelines.
+- Database schemas are managed via Spring JPA auto DDL properties.

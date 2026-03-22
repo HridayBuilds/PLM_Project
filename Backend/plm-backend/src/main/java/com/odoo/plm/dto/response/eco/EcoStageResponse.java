@@ -19,4 +19,6 @@ public class EcoStageResponse {
     private Boolean isFinal;
     private Integer approverCount;
     private Integer requiredApproverCount;
+    private UUID productId;
+    private String productName;
 }

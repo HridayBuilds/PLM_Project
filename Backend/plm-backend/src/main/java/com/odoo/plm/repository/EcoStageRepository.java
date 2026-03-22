@@ -3,6 +3,7 @@ package com.odoo.plm.repository;
 import com.odoo.plm.entity.EcoStage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,40 +13,38 @@ import java.util.UUID;
 @Repository
 public interface EcoStageRepository extends JpaRepository<EcoStage, UUID> {
 
-    // Find all stages ordered by sequence
-    List<EcoStage> findAllByOrderBySequenceAsc();
+    List<EcoStage> findAllByProductIdOrderBySequenceAsc(UUID productId);
 
-    // Find by sequence
-    Optional<EcoStage> findBySequence(Integer sequence);
+    Optional<EcoStage> findByProductIdAndSequence(UUID productId, Integer sequence);
 
-    // Find the final stage
-    Optional<EcoStage> findByIsFinalTrue();
+    @Query("SELECT s FROM EcoStage s WHERE s.product.id = :productId AND s.isFinal = true ORDER BY s.sequence DESC LIMIT 1")
+    Optional<EcoStage> findByProductIdAndIsFinalTrue(@Param("productId") UUID productId);
 
-    // Find by name
-    Optional<EcoStage> findByName(String name);
+    Optional<EcoStage> findByProductIdAndName(UUID productId, String name);
 
-    // Check if name exists
-    boolean existsByName(String name);
+    boolean existsByProductIdAndName(UUID productId, String name);
 
-    // Check if sequence exists
-    boolean existsBySequence(Integer sequence);
+    boolean existsByProductIdAndSequence(UUID productId, Integer sequence);
 
-    // Get the first stage (lowest sequence)
-    @Query("SELECT s FROM EcoStage s ORDER BY s.sequence ASC LIMIT 1")
-    Optional<EcoStage> findFirstStage();
+    Optional<EcoStage> findFirstByProductIdOrderBySequenceAsc(UUID productId);
 
-    // Get next stage after current
-    @Query("SELECT s FROM EcoStage s WHERE s.sequence > :currentSequence ORDER BY s.sequence ASC LIMIT 1")
-    Optional<EcoStage> findNextStage(Integer currentSequence);
+    Optional<EcoStage> findFirstByProductIdAndSequenceGreaterThanOrderBySequenceAsc(UUID productId, Integer currentSequence);
 
-    // Get previous stage
-    @Query("SELECT s FROM EcoStage s WHERE s.sequence < :currentSequence ORDER BY s.sequence DESC LIMIT 1")
-    Optional<EcoStage> findPreviousStage(Integer currentSequence);
+    Optional<EcoStage> findFirstByProductIdAndSequenceLessThanOrderBySequenceDesc(UUID productId, Integer currentSequence);
 
-    // Get max sequence
-    @Query("SELECT MAX(s.sequence) FROM EcoStage s")
-    Integer findMaxSequence();
+    @Query("SELECT MAX(s.sequence) FROM EcoStage s WHERE s.product.id = :productId")
+    Integer findMaxSequenceByProductId(@Param("productId") UUID productId);
 
-    // Count total stages
-    long count();
+    // Global stages (product_id is NULL) - apply to all products
+    @Query("SELECT s FROM EcoStage s WHERE s.product IS NULL ORDER BY s.sequence ASC")
+    List<EcoStage> findAllGlobalStagesOrderBySequenceAsc();
+
+    @Query("SELECT s FROM EcoStage s WHERE s.product IS NULL ORDER BY s.sequence ASC LIMIT 1")
+    Optional<EcoStage> findFirstGlobalStageOrderBySequenceAsc();
+
+    @Query("SELECT s FROM EcoStage s WHERE s.product IS NULL AND s.isFinal = true ORDER BY s.sequence DESC LIMIT 1")
+    Optional<EcoStage> findGlobalFinalStage();
+
+    @Query("SELECT s FROM EcoStage s WHERE s.product IS NULL AND s.sequence > :currentSequence ORDER BY s.sequence ASC LIMIT 1")
+    Optional<EcoStage> findNextGlobalStage(@Param("currentSequence") Integer currentSequence);
 }

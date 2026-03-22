@@ -45,6 +45,8 @@ public class EcoResponse {
     // Changes
     private List<EcoBomChangeResponse> bomChanges;
     private List<EcoProductChangeResponse> productChanges;
+    private List<EcoBomOperationChangeResponse> bomOperationChanges;
+    private List<EcoAttachmentResponse> attachments;
 
     // Approvals
     private List<EcoApprovalResponse> approvals;

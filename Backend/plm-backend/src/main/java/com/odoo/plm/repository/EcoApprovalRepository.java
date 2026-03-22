@@ -46,4 +46,11 @@ public interface EcoApprovalRepository extends JpaRepository<EcoApproval, UUID> 
     // Get approval history for an ECO
     @Query("SELECT a FROM EcoApproval a WHERE a.eco.id = :ecoId ORDER BY a.approvedAt ASC")
     List<EcoApproval> findApprovalHistory(@Param("ecoId") UUID ecoId);
+
+    // JOIN FETCH to eagerly load approverUser and stage
+    @Query("SELECT a FROM EcoApproval a " +
+            "LEFT JOIN FETCH a.approverUser " +
+            "LEFT JOIN FETCH a.stage " +
+            "WHERE a.eco.id = :ecoId ORDER BY a.approvedAt DESC")
+    List<EcoApproval> findByEcoIdWithDetails(@Param("ecoId") UUID ecoId);
 }

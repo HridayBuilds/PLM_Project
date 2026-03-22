@@ -6,6 +6,7 @@ import com.odoo.plm.dto.response.MessageResponse;
 import com.odoo.plm.dto.response.UserResponse;
 import com.odoo.plm.entity.User;
 import com.odoo.plm.enums.Role;
+import com.odoo.plm.enums.UserStatus;
 import com.odoo.plm.exception.BadRequestException;
 import com.odoo.plm.exception.ResourceNotFoundException;
 import com.odoo.plm.exception.UnauthorizedException;
@@ -135,7 +136,50 @@ public class UserService {
             throw new UnauthorizedException("Only admins can view all users");
         }
 
-        return userRepository.findAll().stream()
+        return userRepository.findByStatusNot(UserStatus.PENDING).stream()
+                .map(this::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<UserResponse> getPendingUsers(UUID adminId) {
+        User admin = getUserById(adminId);
+
+        if (admin.getRole() != Role.ADMIN) {
+            throw new UnauthorizedException("Only admins can view pending users");
+        }
+
+        return userRepository.findByStatus(UserStatus.PENDING).stream()
+                .map(this::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public MessageResponse activateUser(UUID adminId, UUID userId, Role role) {
+        User admin = getUserById(adminId);
+
+        if (admin.getRole() != Role.ADMIN) {
+            throw new UnauthorizedException("Only admins can activate users");
+        }
+
+        User user = getUserById(userId);
+
+        if (user.getStatus() != UserStatus.PENDING) {
+            throw new BadRequestException("User is not in pending status");
+        }
+
+        user.setStatus(UserStatus.ACTIVE);
+        user.setRole(role);
+        user.setIsActive(true);
+        userRepository.save(user);
+
+        log.info("User {} activated with role {} by admin {}", user.getLoginId(), role, admin.getLoginId());
+
+        return MessageResponse.success("User activated successfully with role: " + role.name());
+    }
+
+    public List<UserResponse> getUsersByRole(Role role) {
+        return userRepository.findByRole(role).stream()
+                .filter(User::getIsActive)
                 .map(this::mapToUserResponse)
                 .collect(Collectors.toList());
     }

@@ -33,6 +33,7 @@ public class EcoReportResponse {
     private String productName;
     private Integer originalProductVersion;
     private Integer newProductVersion;
+    private String stageName;
 
     // BOM info (if applicable)
     private String bomReference;

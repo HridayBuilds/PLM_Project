@@ -38,7 +38,7 @@ public class User implements UserDetails {
     private UUID id;
 
     @NotBlank
-    @Pattern(regexp = "^PLM[A-Za-z0-9]{3,9}$", message = "Login ID must start with 'PLM' and be 6-12 characters total")
+    @Pattern(regexp = "^ECV[A-Za-z0-9]{3,9}$", message = "Login ID must start with 'ECV' and be 6-12 characters total")
     @Column(name = "login_id", nullable = false, unique = true, length = 12)
     private String loginId;
 

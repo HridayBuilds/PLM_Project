@@ -26,7 +26,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ENGINEERING_USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
         ProductResponse response = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

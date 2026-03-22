@@ -47,9 +47,15 @@ public class AdminController {
     }
 
     @GetMapping("/stages")
-    public ResponseEntity<List<EcoStageResponse>> getAllStages() {
-        List<EcoStageResponse> response = stageService.getAllStages();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<EcoStageResponse>> getStagesByProduct(@RequestParam(required = false) UUID productId) {
+        if (productId != null) {
+            List<EcoStageResponse> response = stageService.getStagesByProduct(productId);
+            return ResponseEntity.ok(response);
+        } else {
+            // Return all stages across all products
+            List<EcoStageResponse> response = stageService.getAllStages();
+            return ResponseEntity.ok(response);
+        }
     }
 
     @PostMapping("/stages/reorder")

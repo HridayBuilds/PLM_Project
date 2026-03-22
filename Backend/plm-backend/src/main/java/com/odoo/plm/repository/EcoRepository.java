@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -86,4 +87,66 @@ public interface EcoRepository extends JpaRepository<Eco, UUID>, JpaSpecificatio
             @Param("userId") UUID userId,
             Pageable pageable
     );
+
+    // ============ JOIN FETCH queries to avoid lazy loading ============
+
+    @Query("SELECT e FROM Eco e " +
+            "LEFT JOIN FETCH e.product " +
+            "LEFT JOIN FETCH e.bom " +
+            "LEFT JOIN FETCH e.createdBy " +
+            "LEFT JOIN FETCH e.currentStage " +
+            "WHERE e.id = :id")
+    Optional<Eco> findByIdWithDetails(@Param("id") UUID id);
+
+    @Query(value = "SELECT e FROM Eco e " +
+            "LEFT JOIN FETCH e.product " +
+            "LEFT JOIN FETCH e.bom " +
+            "LEFT JOIN FETCH e.createdBy " +
+            "LEFT JOIN FETCH e.currentStage " +
+            "WHERE e.createdBy.id = :userId",
+            countQuery = "SELECT COUNT(e) FROM Eco e WHERE e.createdBy.id = :userId")
+    Page<Eco> findByCreatedByIdWithDetails(@Param("userId") UUID userId, Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT e FROM Eco e " +
+            "LEFT JOIN FETCH e.product " +
+            "LEFT JOIN FETCH e.bom " +
+            "LEFT JOIN FETCH e.createdBy " +
+            "LEFT JOIN FETCH e.currentStage " +
+            "JOIN EcoApprovalRule r ON r.ecoStage.id = e.currentStage.id " +
+            "WHERE r.approverUser.id = :approverId AND e.status = 'IN_PROGRESS'",
+            countQuery = "SELECT COUNT(DISTINCT e) FROM Eco e " +
+                    "JOIN EcoApprovalRule r ON r.ecoStage.id = e.currentStage.id " +
+                    "WHERE r.approverUser.id = :approverId AND e.status = 'IN_PROGRESS'")
+    Page<Eco> findPendingForApproverWithDetails(@Param("approverId") UUID approverId, Pageable pageable);
+
+    @Query(value = "SELECT e FROM Eco e " +
+            "LEFT JOIN FETCH e.product " +
+            "LEFT JOIN FETCH e.bom " +
+            "LEFT JOIN FETCH e.createdBy " +
+            "LEFT JOIN FETCH e.currentStage " +
+            "WHERE (:title IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
+            "(:status IS NULL OR e.status = :status) AND " +
+            "(:type IS NULL OR e.ecoType = :type) AND " +
+            "(:productId IS NULL OR e.product.id = :productId)",
+            countQuery = "SELECT COUNT(e) FROM Eco e WHERE " +
+                    "(:title IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
+                    "(:status IS NULL OR e.status = :status) AND " +
+                    "(:type IS NULL OR e.ecoType = :type) AND " +
+                    "(:productId IS NULL OR e.product.id = :productId)")
+    Page<Eco> searchEcosWithDetails(
+            @Param("title") String title,
+            @Param("status") EcoStatus status,
+            @Param("type") EcoType type,
+            @Param("productId") UUID productId,
+            Pageable pageable
+    );
+
+    // Get all ECOs with details (for admin/general listing)
+    @Query(value = "SELECT e FROM Eco e " +
+            "LEFT JOIN FETCH e.product " +
+            "LEFT JOIN FETCH e.bom " +
+            "LEFT JOIN FETCH e.createdBy " +
+            "LEFT JOIN FETCH e.currentStage",
+            countQuery = "SELECT COUNT(e) FROM Eco e")
+    Page<Eco> findAllWithDetails(Pageable pageable);
 }

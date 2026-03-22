@@ -22,12 +22,17 @@ public class CreateBomRequest {
     private UUID productId;
 
     @NotBlank(message = "BOM reference is required")
-    @Size(min = 2, max = 100, message = "Reference must be between 2 and 100 characters")
+    @Size(min = 2, max = 8, message = "Reference must be between 2 and 8 characters")
     private String reference;
+
+    @NotNull(message = "Quantity is required")
+    private Integer quantity;
 
     @Valid
     private List<BomComponentRequest> components;
 
     @Valid
     private List<BomOperationRequest> operations;
+
+    private List<UUID> attachmentIds;
 }

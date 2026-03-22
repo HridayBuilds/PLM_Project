@@ -2,6 +2,7 @@ package com.odoo.plm.controller;
 
 import com.odoo.plm.dto.request.ChangePasswordRequest;
 import com.odoo.plm.dto.request.UpdateProfileRequest;
+import com.odoo.plm.dto.request.admin.UpdateUserRoleRequest;
 import com.odoo.plm.dto.response.MessageResponse;
 import com.odoo.plm.dto.response.UserResponse;
 import com.odoo.plm.entity.User;
@@ -80,6 +81,34 @@ public class UserController {
     }
 
     /**
+     * Get pending users awaiting activation (Admin only)
+     * GET /api/users/pending
+     */
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserResponse>> getPendingUsers(@AuthenticationPrincipal User admin) {
+        log.info("Get pending users request by admin: {}", admin.getLoginId());
+        List<UserResponse> users = userService.getPendingUsers(admin.getId());
+        return ResponseEntity.ok(users);
+    }
+
+    /**
+     * Activate a pending user with a role (Admin only)
+     * POST /api/users/{userId}/activate
+     */
+    @PostMapping("/{userId}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> activateUser(
+            @AuthenticationPrincipal User admin,
+            @PathVariable UUID userId,
+            @RequestParam Role role) {
+
+        log.info("Activate user request for user {} with role {} by admin: {}", userId, role, admin.getLoginId());
+        MessageResponse response = userService.activateUser(admin.getId(), userId, role);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Update user role (Admin only)
      * PUT /api/users/{userId}/role
      */
@@ -88,11 +117,22 @@ public class UserController {
     public ResponseEntity<MessageResponse> updateUserRole(
             @AuthenticationPrincipal User admin,
             @PathVariable UUID userId,
-            @RequestParam Role role) {
+            @Valid @RequestBody UpdateUserRoleRequest request) {
 
         log.info("Update role request for user {} by admin: {}", userId, admin.getLoginId());
-        MessageResponse response = userService.updateUserRole(admin.getId(), userId, role);
+        MessageResponse response = userService.updateUserRole(admin.getId(), userId, request.getRole());
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get all approvers (Admin only)
+     * GET /api/users/approvers
+     */
+    @GetMapping("/approvers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserResponse>> getApprovers() {
+        List<UserResponse> approvers = userService.getUsersByRole(Role.APPROVER);
+        return ResponseEntity.ok(approvers);
     }
 
     /**

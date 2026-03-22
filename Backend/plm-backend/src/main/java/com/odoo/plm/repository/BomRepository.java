@@ -25,6 +25,8 @@ public interface BomRepository extends JpaRepository<Bom, UUID>, JpaSpecificatio
     // Find by status
     Page<Bom> findByStatus(BomStatus status, Pageable pageable);
 
+    Page<Bom> findByStatusNot(BomStatus status, Pageable pageable);
+
     List<Bom> findByStatus(BomStatus status);
 
     // Find active BOM for a product

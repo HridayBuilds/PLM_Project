@@ -1,6 +1,7 @@
 package com.odoo.plm.dto.response;
 
 import com.odoo.plm.enums.Role;
+import com.odoo.plm.enums.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,20 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private Role role;
+    private UserStatus status;
     private Boolean isVerified;
     private Boolean isActive;
     private LocalDateTime createdAt;
+
+    // Computed field for frontend compatibility
+    public String getName() {
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        } else if (firstName != null) {
+            return firstName;
+        } else if (lastName != null) {
+            return lastName;
+        }
+        return "";
+    }
 }
